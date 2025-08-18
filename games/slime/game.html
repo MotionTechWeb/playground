@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>スライム放置RPG（体験版）</title>
+    <style>
+        :root {
+            --bg: #0f1220;
+            --panel: #171a2b;
+            --panel-2: #1e2240;
+            --text: #e9f0ff;
+            --muted: #9fb2ff;
+            --accent: #6ea8ff;
+            --accent-2: #56f0a5;
+            --danger: #ff6a8b;
+            --gold: #ffda62;
+            --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+            background: radial-gradient(1200px 600px at 70% -10%, #1b1f3a 0%, var(--bg) 60%), var(--bg);
+            color: var(--text);
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: clamp(20px, 3vw, 28px);
+            letter-spacing: .02em;
+        }
+
+        .app {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            gap: 16px;
+            grid-template-columns: 1.2fr .8fr;
+        }
+
+        @media (max-width: 900px) {
+            .app {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: linear-gradient(180deg, var(--panel) 0, var(--panel-2) 100%);
+            border: 1px solid rgba(255, 255, 255, .06);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .spread {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .stat {
+            background: rgba(255, 255, 255, .04);
+            padding: 8px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, .05);
+            font-size: 14px;
+        }
+
+        .gold {
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        .btn {
+            appearance: none;
+            border: 1px solid rgba(255, 255, 255, .12);
+            background: #21264a;
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: .15s transform ease, .2s opacity ease;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .04), var(--shadow);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-accent {
+            background: linear-gradient(180deg, #2b7cff, #1f5fe3);
+            border-color: rgba(0, 0, 0, .3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(180deg, #ff6a8b, #e04467);
+            border-color: rgba(0, 0, 0, .3);
+        }
+
+        /* Enemy area */
+        #enemy-area {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 12px;
+            min-height: 380px;
+        }
+
+        .enemy-stage {
+            position: relative;
+            background: radial-gradient(400px 200px at 50% 0%, rgba(255, 255, 255, .08), rgba(255, 255, 255, 0)),
+                linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(0, 0, 0, .15)), #1a1f3a;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, .06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .slime {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 30%, #9af0ff, #2fd0ff 55%, #1ab9f2 70%, #1080c6 100%);
+            box-shadow: inset 0 -12px 20px rgba(0, 0, 0, .25), 0 20px 50px rgba(0, 0, 0, .4);
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .slime:active {
+            transform: scale(.98);
+        }
+
+        .slime::before,
+        .slime::after {
+            content: "";
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            opacity: .85;
+        }
+
+        .slime::before {
+            left: 40px;
+            top: 50px;
+            width: 22px;
+            height: 22px;
+            box-shadow: 50px 0 0 #fff;
+        }
+
+        .slime::after {
+            left: 61px;
+            top: 77px;
+            width: 38px;
+            height: 10px;
+            border-radius: 10px 10px 18px 18px;
+            opacity: .9;
+        }
+
+        .slime-shadow {
+            position: absolute;
+            bottom: 18px;
+            width: 200px;
+            height: 20px;
+            background: radial-gradient(closest-side, rgba(0, 0, 0, .45), rgba(0, 0, 0, 0));
+            border-radius: 50%;
+            filter: blur(4px);
+            pointer-events: none;
+        }
+
+        .hpbar {
+            height: 16px;
+            background: rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .hpbar>.fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #56f0a5, #2edbff);
+            box-shadow: inset 0 0 8px rgba(255, 255, 255, .6);
+            transition: width .15s ease;
+        }
+
+        .hpbar .label {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 12px;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, .5);
+        }
+
+        .floating {
+            position: absolute;
+            pointer-events: none;
+            font-weight: 900;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, .5);
+        }
+
+        /* Upgrades */
+        .upg {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            align-items: center;
+            background: rgba(255, 255, 255, .03);
+            border: 1px solid rgba(255, 255, 255, .06);
+            padding: 10px;
+            border-radius: 12px;
+        }
+
+        .upg h4 {
+            margin: 0 0 4px;
+            font-size: 14px;
+        }
+
+        .upg p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .upg .cost {
+            font-weight: 800;
+            color: var(--gold);
+        }
+
+        .footer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .linkish {
+            color: var(--accent);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <div class="card" id="left">
+            <div class="spread">
+                <div>
+                    <h1>スライム放置RPG（体験版）</h1>
+                    <div class="row" style="flex-wrap:wrap; gap:8px 10px;">
+                        <div class="stat">💰 ゴールド: <span class="gold" id="gold">0</span></div>
+                        <div class="stat">🗡️ DPS: <b id="dps">1</b></div>
+                        <div class="stat">👆 タップ: <b id="tap">1</b></div>
+                        <div class="stat">💥 クリ率: <b id="crit">5%</b></div>
+                        <div class="stat">🌐 ゾーン: <b id="zone">1</b></div>
+                        <div class="stat">☠️ 撃破: <b id="kills">0</b></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <button class="btn" id="prevZone">◀︎ 前</button>
+                    <button class="btn" id="nextZone">次 ▶︎</button>
+                </div>
+            </div>
+
+            <section id="enemy-area" style="margin-top:12px;">
+                <div class="hpbar" aria-label="敵HP">
+                    <div class="fill" id="hpFill"></div>
+                    <div class="label"><span id="hpText">HP 0 / 0</span></div>
+                </div>
+                <div class="enemy-stage" id="stage">
+                    <div class="slime" id="slime" title="クリックで攻撃！"></div>
+                    <div class="slime-shadow"></div>
+                </div>
+                <div class="spread">
+                    <div>敵をタップしてダメージ！ 放置でもDPSで自動攻撃します。</div>
+                    <button class="btn btn-accent" id="saveBtn">💾 セーブ</button>
+                </div>
+            </section>
+        </div>
+
+        <div class="card" id="right">
+            <h2 style="margin:0 0 8px; font-size:18px;">アップグレード</h2>
+            <div class="col" style="display:grid; gap:10px;">
+                <div class="upg">
+                    <div>
+                        <h4>スライム強化（DPS） Lv.<span id="lvPower">0</span></h4>
+                        <p>毎秒ダメージ +1。コストは徐々に上昇。</p>
+                    </div>
+                    <div class="row">
+                        <div class="cost" id="costPower">10</div>
+                        <button class="btn" id="buyPower">購入</button>
+                    </div>
+                </div>
+                <div class="upg">
+                    <div>
+                        <h4>タップ強化（クリックダメ） Lv.<span id="lvTap">0</span></h4>
+                        <p>タップダメージ +1。手動で一気に削ろう！</p>
+                    </div>
+                    <div class="row">
+                        <div class="cost" id="costTap">5</div>
+                        <button class="btn" id="buyTap">購入</button>
+                    </div>
+                </div>
+                <div class="upg">
+                    <div>
+                        <h4>会心の心得（クリ率） Lv.<span id="lvCrit">0</span></h4>
+                        <p>クリティカル率 +1%（最大50%）。ダメージ×2。</p>
+                    </div>
+                    <div class="row">
+                        <div class="cost" id="costCrit">30</div>
+                        <button class="btn" id="buyCrit">購入</button>
+                    </div>
+                </div>
+                <div class="upg">
+                    <div>
+                        <h4>金運アップ（ドロップ増） Lv.<span id="lvBoost">0</span></h4>
+                        <p>撃破ゴールド +10%（重複加算）。</p>
+                    </div>
+                    <div class="row">
+                        <div class="cost" id="costBoost">25</div>
+                        <button class="btn" id="buyBoost">購入</button>
+                    </div>
+                </div>
+            </div>
+            <div class="footer">
+                <div>
+                    自動保存（5秒毎）／オフライン収益（最大8時間）対応。
+                </div>
+                <div class="row" style="gap:8px;">
+                    <button class="btn" id="exportBtn">📤 データ書き出し</button>
+                    <button class="btn" id="importBtn">📥 読み込み</button>
+                    <button class="btn btn-danger" id="resetBtn">🗑 リセット</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fmt = new Intl.NumberFormat('en-US');
+        const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+        const defaultState = () => ({
+            gold: 0,
+            dps: 1,
+            tap: 1,
+            critChance: 0.05,
+            critMult: 2,
+            boost: 0, // gold boost level (10% each)
+            zone: 1,
+            kills: 0,
+            upgrades: { power: 0, tap: 0, crit: 0, boost: 0 },
+            enemy: { hp: 0, maxHp: 0, reward: 0 },
+        });
+
+        let state = defaultState();
+
+        // --- Enemy scaling ---
+        function zoneScaling(zone) {
+            const hp = Math.floor(20 * Math.pow(1.22, zone - 1) + (zone - 1) * 5);
+            const reward = Math.floor(5 * Math.pow(1.18, zone - 1) + (zone - 1) * 2);
+            return { hp, reward };
+        }
+
+        function spawnEnemy() {
+            const z = state.zone;
+            const { hp, reward } = zoneScaling(z);
+            state.enemy = { hp, maxHp: hp, reward };
+            updateHPBar();
+        }
+
+        function goldBoostMultiplier() { return 1 + state.upgrades.boost * 0.10; }
+
+        function dealDamage(amount) {
+            state.enemy.hp -= amount;
+            if (state.enemy.hp <= 0) {
+                const extra = state.enemy.hp; // carry over damage to next enemy
+                const reward = Math.floor(state.enemy.reward * goldBoostMultiplier());
+                state.gold += reward;
+                state.kills++;
+                spawnEnemy();
+                if (extra < 0) {
+                    // apply overflow to next enemy (rare on big DPS)
+                    state.enemy.hp = Math.max(1, state.enemy.hp + extra);
+                }
+            }
+            updateHPBar();
+        }
+
+        function tapAttack(evt) {
+            const isCrit = Math.random() < state.critChance;
+            const dmg = state.tap * (isCrit ? state.critMult : 1);
+            dealDamage(dmg);
+            makeFloatingText(evt ? evt.clientX : null, evt ? evt.clientY : null, dmg, isCrit);
+            updateUI();
+        }
+
+        function makeFloatingText(x, y, val, crit) {
+            const stage = document.getElementById('stage');
+            const rect = stage.getBoundingClientRect();
+            const el = document.createElement('div');
+            el.className = 'floating';
+            el.textContent = Math.floor(val);
+            el.style.left = ((x ?? (rect.left + rect.width / 2)) - rect.left - 10) + 'px';
+            el.style.top = ((y ?? (rect.top + rect.height / 2)) - rect.top - 10) + 'px';
+            el.style.color = crit ? 'var(--danger)' : 'var(--accent-2)';
+            el.style.fontSize = crit ? '22px' : '18px';
+            stage.appendChild(el);
+            const dy = -40 - Math.random() * 20;
+            const dx = -10 + Math.random() * 20;
+            let t = 0;
+            const id = setInterval(() => {
+                t += 1 / 60;
+                el.style.transform = `translate(${dx * t * 18}px, ${dy * t * 18}px)`;
+                el.style.opacity = String(1 - t);
+                if (t >= 1) { clearInterval(id); el.remove(); }
+            }, 1000 / 60);
+        }
+
+        // --- Costs ---
+        const cost = {
+            power: lvl => Math.floor(10 * Math.pow(1.15, lvl)),
+            tap: lvl => Math.floor(5 * Math.pow(1.15, lvl)),
+            crit: lvl => Math.floor(30 * Math.pow(1.22, lvl)),
+            boost: lvl => Math.floor(25 * Math.pow(1.2, lvl)),
+        };
+
+        function buy(kind) {
+            const lvl = state.upgrades[kind];
+            const c = cost[kind](lvl);
+            if (state.gold < c) return;
+            state.gold -= c;
+            state.upgrades[kind]++;
+            if (kind === 'power') state.dps += 1;
+            if (kind === 'tap') state.tap += 1;
+            if (kind === 'crit') state.critChance = clamp(state.critChance + 0.01, 0, 0.5);
+            if (kind === 'boost') state.boost += 1;
+            updateUI();
+        }
+
+        // --- UI ---
+        const el = id => document.getElementById(id);
+        function updateHPBar() {
+            const p = clamp(state.enemy.hp / state.enemy.maxHp, 0, 1);
+            el('hpFill').style.width = (p * 100) + '%';
+            el('hpText').textContent = `HP ${Math.max(0, Math.floor(state.enemy.hp))} / ${state.enemy.maxHp}`;
+        }
+
+        function updateUI() {
+            el('gold').textContent = fmt.format(Math.floor(state.gold));
+            el('dps').textContent = fmt.format(state.dps);
+            el('tap').textContent = fmt.format(state.tap);
+            el('crit').textContent = Math.round(state.critChance * 100) + '%';
+            el('zone').textContent = state.zone;
+            el('kills').textContent = fmt.format(state.kills);
+
+            el('lvPower').textContent = state.upgrades.power;
+            el('lvTap').textContent = state.upgrades.tap;
+            el('lvCrit').textContent = state.upgrades.crit;
+            el('lvBoost').textContent = state.upgrades.boost;
+
+            el('costPower').textContent = fmt.format(cost.power(state.upgrades.power));
+            el('costTap').textContent = fmt.format(cost.tap(state.upgrades.tap));
+            el('costCrit').textContent = fmt.format(cost.crit(state.upgrades.crit));
+            el('costBoost').textContent = fmt.format(cost.boost(state.upgrades.boost));
+
+            // Button availability
+            el('buyPower').disabled = state.gold < cost.power(state.upgrades.power);
+            el('buyTap').disabled = state.gold < cost.tap(state.upgrades.tap);
+            el('buyCrit').disabled = state.gold < cost.crit(state.upgrades.crit) || state.critChance >= 0.5;
+            el('buyBoost').disabled = state.gold < cost.boost(state.upgrades.boost);
+
+            updateHPBar();
+        }
+
+        // --- Save/Load ---
+        const KEY = 'slime-idle-save-v1';
+        const LAST = 'slime-idle-last';
+
+        function save(manual = false) {
+            localStorage.setItem(KEY, JSON.stringify(state));
+            localStorage.setItem(LAST, String(Date.now()));
+            if (manual) flash('保存しました');
+        }
+
+        function load() {
+            const raw = localStorage.getItem(KEY);
+            if (raw) {
+                try { state = Object.assign(defaultState(), JSON.parse(raw)); }
+                catch { state = defaultState(); }
+            }
+            const last = Number(localStorage.getItem(LAST) || '0');
+            const now = Date.now();
+            if (last && now > last) {
+                const deltaMs = Math.min(now - last, 1000 * 60 * 60 * 8); // cap 8h
+                const offlineSecs = Math.floor(deltaMs / 1000);
+                simulateOffline(offlineSecs);
+                if (offlineSecs > 5) flash(`オフライン収益: 約 ${fmt.format(offlineSecs)} 秒`);
+            }
+            spawnEnemy();
+            updateUI();
+        }
+
+        function simulateOffline(seconds) {
+            // 1秒ごとにDPSを適用して敵を倒していくシンプルなシミュレーション
+            let s = seconds;
+            while (s-- > 0) {
+                dealDamage(state.dps);
+            }
+        }
+
+        function exportData() {
+            const data = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+            navigator.clipboard?.writeText(data).catch(() => { });
+            flash('セーブデータをクリップボードにコピーしました');
+        }
+
+        function importData() {
+            const data = prompt('クリップボード等から貼り付けてください');
+            if (!data) return;
+            try {
+                const json = decodeURIComponent(escape(atob(data)));
+                const obj = JSON.parse(json);
+                state = Object.assign(defaultState(), obj);
+                save();
+                spawnEnemy();
+                updateUI();
+                flash('読み込みました');
+            } catch {
+                alert('読み込みに失敗しました');
+            }
+        }
+
+        function resetAll() {
+            if (!confirm('本当にリセットしますか？')) return;
+            state = defaultState();
+            spawnEnemy();
+            updateUI();
+            save();
+            flash('リセットしました');
+        }
+
+        function flash(msg) {
+            const div = document.createElement('div');
+            div.textContent = msg;
+            div.style.position = 'fixed';
+            div.style.left = '50%';
+            div.style.top = '18px';
+            div.style.transform = 'translateX(-50%)';
+            div.style.background = 'rgba(0,0,0,.6)';
+            div.style.border = '1px solid rgba(255,255,255,.2)';
+            div.style.padding = '10px 14px';
+            div.style.borderRadius = '12px';
+            div.style.backdropFilter = 'blur(6px)';
+            div.style.zIndex = '9999';
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 1800);
+        }
+
+        // --- Events ---
+        function bind() {
+            el('slime').addEventListener('click', tapAttack);
+            el('buyPower').addEventListener('click', () => buy('power'));
+            el('buyTap').addEventListener('click', () => buy('tap'));
+            el('buyCrit').addEventListener('click', () => buy('crit'));
+            el('buyBoost').addEventListener('click', () => buy('boost'));
+            el('nextZone').addEventListener('click', () => { state.zone++; spawnEnemy(); updateUI(); });
+            el('prevZone').addEventListener('click', () => { state.zone = Math.max(1, state.zone - 1); spawnEnemy(); updateUI(); });
+            el('saveBtn').addEventListener('click', () => save(true));
+            el('exportBtn').addEventListener('click', exportData);
+            el('importBtn').addEventListener('click', importData);
+            el('resetBtn').addEventListener('click', resetAll);
+
+            // Keyboard: Space to tap
+            window.addEventListener('keydown', (e) => { if (e.code === 'Space') { e.preventDefault(); tapAttack(); } });
+        }
+
+        // --- Game loop ---
+        function loop() {
+            // Apply DPS each second in fractional ticks for smoother bar
+            const hz = 20; // 20 FPS logic
+            const perTick = state.dps / hz;
+            dealDamage(perTick);
+            updateUI();
+        }
+
+        // --- Boot ---
+        bind();
+        load();
+        setInterval(loop, 1000 / 20);
+        setInterval(save, 5000);
+    </script>
+</body>
+
+</html>
