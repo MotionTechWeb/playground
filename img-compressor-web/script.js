@@ -165,7 +165,6 @@ els.reencodeAllBtn.addEventListener("click", async () => {
 els.downloadAllBtn.addEventListener("click", async () => {
   if (!state.items.length) return;
 
-  // 1) ZIP 内容を準備
   const zip = new JSZip();
   let added = 0;
   for (const item of state.items) {
@@ -175,30 +174,6 @@ els.downloadAllBtn.addEventListener("click", async () => {
   }
   if (!added) return;
 
-  // 2) File System Access API が使えるなら「先に」保存ダイアログを出す
-  const suggestedName = `compressed_${formatDateTime()}.zip`;
-  let fileHandle = null,
-    writable = null;
-  if (window.showSaveFilePicker) {
-    try {
-      fileHandle = await window.showSaveFilePicker({
-        suggestedName,
-        types: [
-          {
-            description: "ZIP Archive",
-            accept: { "application/zip": [".zip"] },
-          },
-        ],
-        excludeAcceptAllOption: false,
-      });
-      writable = await fileHandle.createWritable();
-    } catch (e) {
-      // ユーザーがキャンセルした等
-      return;
-    }
-  }
-
-  // 3) ZIP を生成（進捗表示）
   setProgress("ZIP を作成中...");
   const blob = await zip.generateAsync({
     type: "blob",
@@ -207,17 +182,44 @@ els.downloadAllBtn.addEventListener("click", async () => {
   });
   setProgress("");
 
-  // 4) 保存：FS Access API 優先、なければ従来のダウンロード
-  if (writable) {
-    try {
-      await writable.write(blob);
-      await writable.close();
-    } catch (e) {
-      // 書き込み失敗時はフォールバック
-      downloadBlob(blob, suggestedName);
+  const filename = `compressed_${formatDateTime()}.zip`;
+
+  try {
+    // ✅ 既定：ブラウザのダウンロードマネージャに乗る方法
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename; // ここが“ダウンロード扱い”の肝
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // revokeは少し遅らせる（Safari対策）
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  } catch (err) {
+    // フォールバック：File System Access API（HTTPS or localhost）
+    if (window.showSaveFilePicker) {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: filename,
+          types: [
+            {
+              description: "ZIP Archive",
+              accept: { "application/zip": [".zip"] },
+            },
+          ],
+          excludeAcceptAllOption: false,
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+      } catch (e) {
+        // ユーザーキャンセル等は無視
+      }
+    } else {
+      // 最終フォールバック
+      downloadBlob(blob, filename);
     }
-  } else {
-    downloadBlob(blob, suggestedName);
   }
 });
 
@@ -388,7 +390,7 @@ function ensureCompareOverlay() {
       <div class="cmp-topbar">
         <div class="cmp-title">ホバー/タッチで原画プレビュー</div>
         <div style="display:flex; gap:8px;">
-          <button class="cmp-fs"   aria-label="画面いっぱいに表示">⤢ 拡大</button>
+          <button class="cmp-fs"   aria-label="拡大">⤢ 拡大</button>
           <button class="cmp-close" aria-label="閉じる">×</button>
         </div>
       </div>
@@ -398,7 +400,7 @@ function ensureCompareOverlay() {
         <div class="cmp-corner-label" id="cmpLabel" aria-live="polite">圧縮後</div>
       </div>
       <div class="cmp-legend"><span class="cmp-badge">通常＝圧縮後</span><span class="cmp-badge">ホバー/タッチ中＝元画像</span></div>
-      <div class="cmp-hint">ヒント: 画像上にマウスを置く/指で押さえている間だけ原画になります。Esc で閉じる。</div>
+      <div class="cmp-hint">ヒント: マウスクリック/指で押さえている間だけ原画になります。Esc で閉じる。</div>
     </div>
   `;
   document.body.appendChild(overlay);
