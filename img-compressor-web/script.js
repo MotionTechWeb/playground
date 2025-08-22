@@ -344,10 +344,10 @@ function injectCompareStyles() {
   if (document.getElementById("cmpStyles")) return;
   const css = `
   .cmp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9999}
-  .cmp-dialog{width:min(92vw,1200px);max-height:90vh;background:#0e1117;border:1px solid #2a2f3a;border-radius:12px;box-shadow:0 20px 80px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px;padding:12px}
-  .cmp-topbar{display:flex;align-items:center;justify-content:space-between}
+  .cmp-dialog{width:min(92vw,1400px);max-height:90vh;background:#0e1117;border:1px solid #2a2f3a;border-radius:12px;box-shadow:0 20px 80px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:10px;padding:12px}
+  .cmp-topbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .cmp-title{font-weight:700;color:#e8eaed}
-  .cmp-close{appearance:none;border:1px solid #394150;background:#121826;color:#e8eaed;border-radius:8px;padding:6px 10px;cursor:pointer}
+  .cmp-close,.cmp-fs{appearance:none;border:1px solid #394150;background:#121826;color:#e8eaed;border-radius:8px;padding:6px 10px;cursor:pointer}
   .cmp-stage{position:relative;flex:1;min-height:300px;max-height:70vh;background:#0b0c0f;border-radius:10px;overflow:hidden;border:1px solid #2a2f3a;display:flex;align-items:center;justify-content:center}
   .cmp-img{position:absolute;max-width:100%;max-height:100%;object-fit:contain;user-select:none}
   .cmp-after{opacity:1;transition:opacity .12s ease}
@@ -358,21 +358,21 @@ function injectCompareStyles() {
   .cmp-badge{background:#121826;border:1px solid #2a2f3a;color:#e8eaed;border-radius:999px;padding:4px 8px}
   .cmp-hint{color:#9aa0a6;font-size:12px;text-align:center;margin-top:2px}
   .card img{cursor:zoom-in}
-  /* ここから追加：右上ラベル */
-  .cmp-corner-label{
-    position:absolute; top:8px; right:8px;
-    background:rgba(18,24,38,.85); color:#e8eaed;
-    border:1px solid #2a2f3a; border-radius:999px;
-    padding:4px 8px; font-size:12px; pointer-events:none
-  }
+  .cmp-corner-label{position:absolute;top:8px;right:8px;background:rgba(18,24,38,.85);color:#e8eaed;border:1px solid #2a2f3a;border-radius:999px;padding:4px 8px;font-size:12px;pointer-events:none}
+
+  /* === ページ内で擬似フルスクリーン（最大化） === */
+  .cmp-overlay.fullpad { padding: 0 } /* 余白を無くす（必要なら） */
+  .cmp-dialog.is-maximized{width:100vw;height:100vh;max-height:100vh;border-radius:0}
+  .cmp-dialog.is-maximized .cmp-stage{max-height:calc(100vh - 96px)} /* タイトル・余白分 */
   `;
+
   const style = document.createElement("style");
   style.id = "cmpStyles";
   style.textContent = css;
   document.head.appendChild(style);
 }
 let cmp =
-  /** @type {null | {overlay:HTMLElement, dialog:HTMLElement, stage:HTMLElement, before:HTMLImageElement, after:HTMLImageElement, label:HTMLDivElement, closeBtn:HTMLButtonElement}} */ (
+  /** @type {null | {overlay:HTMLElement, dialog:HTMLElement, stage:HTMLElement, before:HTMLImageElement, after:HTMLImageElement, label:HTMLDivElement, fsBtn:HTMLButtonElement, closeBtn:HTMLButtonElement}} */ (
     null
   );
 
@@ -387,7 +387,10 @@ function ensureCompareOverlay() {
     <div class="cmp-dialog" role="dialog" aria-modal="true" aria-label="比較ビュー">
       <div class="cmp-topbar">
         <div class="cmp-title">ホバー/タッチで原画プレビュー</div>
-        <button class="cmp-close" aria-label="閉じる">×</button>
+        <div style="display:flex; gap:8px;">
+          <button class="cmp-fs"   aria-label="画面いっぱいに表示">⤢ 拡大</button>
+          <button class="cmp-close" aria-label="閉じる">×</button>
+        </div>
       </div>
       <div class="cmp-stage" id="cmpStage">
         <img class="cmp-img cmp-after" id="cmpAfter" alt="圧縮後" />
@@ -405,6 +408,7 @@ function ensureCompareOverlay() {
   const before = overlay.querySelector("#cmpBefore");
   const after = overlay.querySelector("#cmpAfter");
   const label = overlay.querySelector("#cmpLabel");
+  const fsBtn = overlay.querySelector(".cmp-fs");
   const closeBtn = overlay.querySelector(".cmp-close");
 
   // 閉じる
@@ -426,6 +430,31 @@ function ensureCompareOverlay() {
     label.textContent = "圧縮後";
   };
 
+  // 画面いっぱい（擬似フルスクリーン）切替
+  fsBtn.addEventListener("click", toggleMaximize);
+  document.addEventListener("keydown", (e) => {
+    if (
+      cmp?.overlay.style.display === "flex" &&
+      (e.key === "f" || e.key === "F")
+    ) {
+      toggleMaximize();
+    }
+  });
+
+  function toggleMaximize() {
+    const maximized = dialog.classList.toggle("is-maximized");
+    // 余白も除去したい場合は overlay にもクラス
+    overlay.classList.toggle("fullpad", maximized);
+    fsBtn.textContent = maximized ? "⤡ 縮小" : "⤢ 画面いっぱい";
+  }
+
+  // フルスクリーン終了時のボタン表示を戻す
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement && fsBtn) {
+      fsBtn.textContent = "⤢ フルスクリーン";
+    }
+  });
+
   stage.addEventListener("pointerenter", showOrig);
   stage.addEventListener("pointerleave", showComp);
   stage.addEventListener("pointerdown", showOrig);
@@ -433,7 +462,7 @@ function ensureCompareOverlay() {
   stage.addEventListener("touchstart", showOrig, { passive: true });
   stage.addEventListener("touchend", showComp);
 
-  cmp = { overlay, dialog, stage, before, after, label, closeBtn };
+  cmp = { overlay, dialog, stage, before, after, label, fsBtn, closeBtn };
   return cmp;
 }
 function openCompare(item) {
@@ -441,15 +470,26 @@ function openCompare(item) {
   ui.after.src = item.url || ""; // 通常時＝圧縮後を表示
   ui.before.src = getOriginalUrl(item); // ホバー/タッチ中＝原画を表示
   ui.stage.classList.remove("hovering");
-  ui.label.textContent = "圧縮後"; // 初期表示
+  ui.label && (ui.label.textContent = "圧縮後");
   document.body.style.overflow = "hidden";
   ui.overlay.style.display = "flex";
+  ui.dialog.classList.remove("is-maximized");
+  ui.overlay.classList.remove("fullpad");
+  ui.fsBtn && (ui.fsBtn.textContent = "⤢ 画面いっぱい");
   ui.closeBtn.focus?.();
 }
 function closeCompare() {
   if (!cmp) return;
+  // 念のため：ブラウザFSが残っていたら解除（他処理に影響なし）
+  try {
+    document.fullscreenElement && document.exitFullscreen?.();
+  } catch {}
+  // 擬似フルスクリーンを解除
+  cmp.dialog.classList.remove("is-maximized");
+  cmp.overlay.classList.remove("fullpad");
+  // モーダルを閉じる & スクロール戻す
   cmp.overlay.style.display = "none";
-  document.body.style.overflow = "";
+  document.body.style.overflow = ""; // 必ずスクロール復帰
 }
 
 // ===== 画像ユーティリティ =====
@@ -675,7 +715,7 @@ function appendCard(item) {
     item.outName
   }">保存</a>
       <button class="btn btn-secondary compare">比較</button>
-      <button class="btn btn-secondary reencode">この画像のみ再エンコード</button>
+      <button class="btn btn-secondary reencode">個別に再エンコード</button>
       <button class="btn btn-secondary remove">削除</button>
     </div>
   `;

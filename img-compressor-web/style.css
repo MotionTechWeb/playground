@@ -197,3 +197,97 @@ body {
 .hidden {
   display: none !important;
 }
+
+/* === モーダル全体 === */
+#modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: none; /* JSで制御 */
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+/* === モーダル内のコンテナ === */
+#modal-content {
+  position: relative;
+  max-width: 95vw;
+  max-height: 98vh; /* ← 95vh から 98vh に拡大 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* === モーダル内の画像 === */
+.modal img {
+  max-width: 95%;
+  max-height: 95vh; /* ← 縦方向ほぼ全画面まで拡大 */
+  object-fit: contain;
+  transition: opacity 0.3s ease;
+}
+/* === ラベル（元画像 / 圧縮後） === */
+#modal .label {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* 閉じるボタン */
+#modal .close-btn {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+/* --- カード内の横はみ出し対策 --- */
+.card .meta,
+.card .actions {
+  min-width: 0; /* flex内の子要素を縮められるようにする */
+}
+
+.card .meta .name {
+  min-width: 0; /* 省略記号の効きを保証 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card .stats {
+  overflow-wrap: anywhere; /* 数値や英単語が長い場合でも折り返す */
+  word-break: break-word;
+}
+
+/* ボタンが幅不足で押し出さないようラップ時の伸縮を許可 */
+.card .actions .btn {
+  flex: 1 1 auto;
+}
+
+/* 画像はブロック化して余計な行間を消す＆横幅にフィット */
+.card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 極小幅での安全策：2列のstatsを1列に落とす */
+@media (max-width: 420px) {
+  .card .stats {
+    grid-template-columns: 1fr;
+  }
+}
