@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CSV → HTML ジェネレーター</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header class="container">
+    <h1>CSV → HTML ジェネレーター</h1>
+    <p class="desc">B列をキー、C列を値として解析し、空行で区切られたブロックごとに
+      <code>&lt;div&gt;&lt;h2&gt;&lt;img&gt;&lt;p&gt;</code> を出力します。</p>
+  </header>
+
+  <main class="container grid">
+    <section class="card">
+      <h2>1) CSV入力</h2>
+      <div class="controls">
+        <label class="file">
+          <input id="csv-file" type="file" accept=".csv,text/csv" />
+        </label>
+        <button id="load-sample" class="btn">サンプル読み込み</button>
+      </div>
+      <textarea id="csv-input" placeholder="ここにCSVを貼り付けるか、上のボタンでファイルを選択してください" spellcheck="false"></textarea>
+
+      <details class="mt">
+        <summary>高度な設定（キーのマッピング）</summary>
+        <p>既定では、以下のキー名（B列の値）を読み取ります：</p>
+        <ul>
+          <li><strong>テストタイトル</strong> → 見出し (&lt;h2&gt;)</li>
+          <li><strong>(含む) 画像パス</strong> → 画像 src</li>
+          <li><strong>(含む) テキスト / 本文</strong> → 段落 (&lt;p&gt;)</li>
+        </ul>
+        <p>必要に応じて下のJSONを編集してください（完全一致/部分一致）。</p>
+        <textarea id="mapping-json" spellcheck="false" class="mono">{ 
+  "title_keys_exact": ["テストタイトル"],
+  "image_keys_contains": ["画像パス"],
+  "text_keys_contains": ["テキスト", "本文"],
+  "templates_by_header": {
+    "テストタイトルテストタイトル": "standard"
+  },
+  "default_template": "standard"
+}</textarea>
+      </details>
+
+      <div class="controls mt">
+        <label class="check">
+          <input id="wrap-full" type="checkbox" checked />
+          <span>完全なHTMLとして出力（&lt;html&gt;～&lt;/html&gt;を含む）</span>
+        </label>
+        <button id="generate" class="btn primary">HTMLを生成</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>2) 出力</h2>
+      <textarea id="html-output" spellcheck="false" class="mono" placeholder="ここに生成結果が表示されます" readonly></textarea>
+      <div class="controls">
+        <button id="copy" class="btn">コピー</button>
+        <button id="download" class="btn">HTMLをダウンロード</button>
+      </div>
+      <h3>プレビュー</h3>
+      <div id="preview" class="preview"></div>
+    </section>
+  </main>
+
+  <footer class="container">
+    <small>© CSV → HTML Generator. Pure Browser JS.</small>
+  </footer>
+
+  <script src="./script.js"></script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+* { box-sizing: border-box; }
+:root {
+  --bg: #0b0c0f;
+  --panel: #12151a;
+  --ink: #e6e7ea;
+  --sub: #a8acb6;
+  --acc: #3aa6ff;
+  --border: #1e222a;
+}
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.6 system-ui, -apple-system, "Segoe UI", "Noto Sans JP", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+h1 { font-size: 22px; margin: 16px 0 8px; }
+h2 { font-size: 18px; margin: 0 0 8px; }
+h3 { font-size: 16px; margin: 16px 0 8px; }
+.desc { color: var(--sub); margin: 0 0 12px; }
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 900px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+}
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+}
+.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mt { margin-top: 12px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+textarea {
+  width: 100%; min-height: 180px; background: #0f1318; color: var(--ink);
+  border: 1px solid var(--border); border-radius: 10px; padding: 12px; outline: none;
+}
+#mapping-json { min-height: 120px; }
+.btn {
+  appearance: none; border: 1px solid var(--border); background: #151a21; color: var(--ink);
+  padding: 8px 12px; border-radius: 10px; cursor: pointer;
+}
+.btn:hover { filter: brightness(1.05); }
+.btn.primary { background: var(--acc); color: #001526; border-color: transparent; }
+.file input[type=file] { padding: 6px; background: #0f1318; border: 1px solid var(--border); border-radius: 8px; color: var(--ink); }
+.check { display: inline-flex; gap: 8px; align-items: center; }
+.preview {
+  background: #0f1318; border: 1px dashed var(--border); border-radius: 10px; padding: 12px; min-height: 120px;
+}
+.preview .block {
+  background: #12161d; border: 1px solid #202734; border-radius: 12px; padding: 10px; margin: 10px 0;
+}
+.preview h2 { margin: 0 0 8px; font-size: 16px; }
+.preview p { margin: 8px 0 0; }
+.preview img { max-width: 100%; display: block; border-radius: 8px; }
+footer { color: var(--sub); text-align: center; padding-bottom: 30px; }
