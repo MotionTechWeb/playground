@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FizzBuzz Trainer RPG</title>
+    <!-- レトロなドット風フォント -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+    <!-- 上部バー -->
+    <header class="topbar">
+        <div class="left">
+            <span class="label">TIME</span>
+            <span id="timer">0.0</span><span class="unit">s</span>
+        </div>
+        <div class="center">
+            <span class="label">SCORE</span>
+            <span id="score">0</span>
+        </div>
+        <button id="menuBtn" class="icon-btn" aria-label="メニュー">≡</button>
+    </header>
+
+    <main class="stage">
+        <!-- 敵（数字） -->
+        <div id="number" class="number">1</div>
+
+        <!-- ログ（1行メッセージ） -->
+        <p id="message" class="message info" role="status" aria-live="polite"></p>
+
+        <!-- 6つのボタン（2×3・高さ増し） -->
+        <section class="grid">
+            <button class="btn" data-answer="fizz">3で割る</button>
+            <button class="btn" data-answer="buzz">4で割る</button>
+            <button class="btn" data-answer="fizzbuzz">7で割る</button>
+            <button class="btn" data-answer="number">3と4で<br>割る</button>
+            <button class="btn">3と7で<br>割る</button>
+            <button class="btn">4と7で<br>割る</button>
+        </section>
+        <!-- 6ボタンの直後に追加 -->
+        <section class="actions">
+            <button id="noneBtn" class="btn round-left" data-answer="number" aria-label="虚無">虚無</button>
+            <button id="allBtn" class="btn round-right" data-answer="fizzbuzz" aria-label="全部">全部</button>
+        </section>
+
+        <!-- ライフ（終了時はTweetに切替） -->
+        <div id="lifeSlot" class="life-slot">
+            <div class="life">
+                <span class="heart" aria-hidden="true">❤</span>
+                <span id="lives">3</span>
+            </div>
+            <button id="tweetBtn" class="btn tweet" style="display:none;">結果をツイート</button>
+        </div>
+    </main>
+
+
+
+    <!-- 簡易モーダル（任意） -->
+    <div id="menuModal" class="modal" hidden>
+        <div class="modal-content">
+            <button class="icon-btn close" data-close>×</button>
+            <h3>メニュー</h3>
+
+        </div>
+    </div>
+
+    <script src="./main.js"></script>
+</body>
+
+</html>
