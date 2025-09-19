@@ -767,7 +767,7 @@ function clamp(n, min, max) {
 }
 function makeOutName(name, ext) {
   const base = name.replace(/\.[^.]+$/, "");
-  return `${base}_compressed.${ext}`;
+  return `${base}.${ext}`;
 }
 function guessExtFromMime(mime) {
   switch (mime) {
