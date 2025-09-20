@@ -610,9 +610,9 @@ async function awaitMaybeBitmap(canvas) {
   }
 }
 function fitWithin(w, h, maxEdge) {
-  if (w <= maxEdge && h <= maxEdge) return { width: w, height: h };
-  const isW = w >= h;
-  const ratio = isW ? maxEdge / w : maxEdge / h;
+  // maxEdgeを幅として扱う
+  if (w <= maxEdge) return { width: w, height: h };
+  const ratio = maxEdge / w;
   return { width: Math.round(w * ratio), height: Math.round(h * ratio) };
 }
 async function resampleToCanvas(bitmap, tw, th) {
